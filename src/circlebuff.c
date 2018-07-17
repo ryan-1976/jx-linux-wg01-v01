@@ -20,16 +20,11 @@
 #include "circlebuff.h"
 #include <stdio.h>
 
-
-
-
 DATAS_BUFF_T   comBuff0; 
 MQTT_SENT_BUFF_T mqSentBuff;
 RECV_BUFF_T RecvBuff4treat;
 pthread_mutex_t sqlWriteBufferLock;
 pthread_cond_t  sqlWritePacketFlag;
-
-unsigned char AP_PacketBuff[MAX_PACKET_BUFF_LEN];//���嵥�����ݰ�
 
 void G_Buff_init(void)
 {
@@ -64,7 +59,7 @@ unsigned char  AP_circleBuff_WriteData(unsigned char data)
 	//printf("\n");
 	//printf("-----comBuff0.writePos= %d\n",comBuff0.writePos);
     nextPos = (comBuff0.writePos + 1) % MAX_BUFF_LEN;
-    if (nextPos != comBuff0.readPos)    // �жϻ����Ƿ���
+    if (nextPos != comBuff0.readPos)
     {
         comBuff0.data[comBuff0.writePos] = data;
         comBuff0.writePos = nextPos;
@@ -109,9 +104,9 @@ INT16U AP_circleBuff_ReadPacketData(void)
         dataLen=AP_circleBuff_ReadData();
 		dataLen =dataLen *256;
 		dataLen +=AP_circleBuff_ReadData();
-	// printf("(port)= %d",port);
-	// printf("(len)=----------------- %d",dataLen);
-	// printf("\n");
+//		 printf("(port)= %x",port);
+//		 printf("(len)=----------------- %d",dataLen);
+//		 printf("\n");
     }
     else
     {
@@ -168,12 +163,12 @@ void AP_circleBuff_WritePacket(INT8U *s, INT16U len, INT16U port)
 {
     unsigned int i;
 	
-	// printf("\n");
+	//printf("\n");
 	// printf("-----enter--AP_circleBuff_WritePacket-------------- \n");
 	AP_circleBuff_WriteData((unsigned char) (port>>8));
 	AP_circleBuff_WriteData((unsigned char)port);
 	
-	// printf("port=----------------- %d\n",port);
+	 //printf("port=----------------- %d\n",port);
     AP_circleBuff_WriteData((unsigned char) (len>>8));
 	AP_circleBuff_WriteData((unsigned char)len);
 	// printf("(len_h)=----------------- %d",(len>>8));

@@ -3,21 +3,24 @@
 #include <unistd.h>  
 #include "circlebuff.h"
 #include "spiCom.h"
-U08 cdtuBuf[PACKET_LEN];
+//U08 cdtuBuf[PACKET_LEN];
+INT8U cdtuBuf[1024];
 extern U08 spiRxBuff[];
 U16 g_comPacketIdx=0;
 static U32 g_siteId=0x18071301;
-
-void spi2MqtttPacket(void)
+extern U32 g_siteId;
+extern DATAS_BUFF_T   comBuff0;
+int spi2MqtttPacket(void)
 {
 	COM_TYPE *pCom;
 	UNION_4_BYTE tmp4;
 	UNION_2_BYTE tmp2;
 	U16 i;
 
-	if(spiRxBuff[1]==0)//
+	if(spiRxBuff[1]==0)
 	{
-		return;
+
+		return 0;
 	}
 	pCom =(COM_TYPE *)&cdtuBuf[0];
 	pCom->head.startFlag = 0x7e;
@@ -44,6 +47,9 @@ void spi2MqtttPacket(void)
     	pCom->buffer[i+3+PACKET_HEAD_LEN]=spiRxBuff[i+1];
     }
     pCom->buffer[PACKET_LEN-1]=0x7e;
+    pthread_mutex_lock(&comBuff0.lock);
 	AP_circleBuff_WritePacket(cdtuBuf,PACKET_LEN,DTU2MQTPA);
-
+	pthread_cond_signal(&comBuff0.newPacketFlag);
+	pthread_mutex_unlock(&comBuff0.lock);
+	return 1;
 }

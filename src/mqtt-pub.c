@@ -8,48 +8,106 @@
 #include <unistd.h>
 #include "circlebuff.h"
 
-//#define ADDRESS     "tcp://localhost:1883"
-//#define ADDRESS     "tcp://192.168.3.101:1883"
-//#define ADDRESS     "tcp://182.61.43.75:1883"
+const char *gs_siteId="18071301";
 #define ADDRESS     "tcp://47.106.81.63:1883"
-#define CLIENTID    "11111111111111pub"
-#define CLIENTID1   "11111111111122pub"
-#define TOPIC       "mqtt/11111111111111"
-#define TOPIC1       "mqtt/11111111111122"
-#define PAYLOAD     "wgrt-data"
+//#define CLIENTID    "11111111111111pub"
+
+char gs_report[50];
+char g_mqTopicCtrl[50];
+char g_mqTopicResponse[50];
+char g_mqClientId[50];
+static const char *report="/report";
+static const char *response="/response";
+static const char *rec="/rec";
+static const char *topicFront="/jx/fjyp_";
 #define QOS         1
 #define TIMEOUT     5000L
+
+
 char pubBuf[2048];
 extern MQTT_SENT_BUFF_T   mqSentBuff;
 
 //----------------------------------------------------------------------
+extern DATAS_BUFF_T   comBuff0;
+volatile MQTTClient_deliveryToken deliveredtoken;
+int g_connectErrCount=0;
+void delivered(void *context, MQTTClient_deliveryToken dt)
+{
+    printf("Message with token value %d delivery confirmed\n", dt);
+    deliveredtoken = dt;
+}
+
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+{
+    int i;
+    char* payloadptr;
+
+    printf(" new mqtt Message arrived:");
+    printf(" topic: %s", topicName);
+	printf(" topicLen:%d\n ",message->payloadlen);
+
+    payloadptr = message->payload;
+
+	pthread_mutex_lock(&comBuff0.lock);
+
+	AP_circleBuff_WritePacket(payloadptr++,message->payloadlen,MQTPA2DTU);
+	pthread_cond_signal(&comBuff0.newPacketFlag);
+	pthread_mutex_unlock(&comBuff0.lock);
+
+    MQTTClient_freeMessage(&message);
+    MQTTClient_free(topicName);
+    return 1;
+}
+
+void connlost(void *context, char *cause)
+{
+    printf("\nConnection lost\n");
+    printf("     cause: %s\n", cause);
+}
 
 //----------------------------------------------------------------------
 void *mqtt_pub_treat(int argc, char* argv[])
 {
     MQTTClient client;
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-//    MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
     int rc, i;
 
-    //int MQTTClient_isConnected	(	MQTTClient 	handle	);
+    conn_opts.username="jxkj007";
+    conn_opts.password="001";
 
+   	gs_report[0]=0;
+   	strcat(gs_report,topicFront);
+   	strcat(gs_report,gs_siteId);
+	strcat(gs_report,report);
 
+   	g_mqTopicCtrl[0]=0;
+   	strcat(g_mqTopicCtrl,topicFront);
+   	strcat(g_mqTopicCtrl,gs_siteId);
+   	strcat(g_mqTopicCtrl,rec);
+
+   	g_mqTopicResponse[0]=0;
+   	strcat(g_mqTopicResponse,topicFront);
+   	strcat(g_mqTopicResponse,gs_siteId);
+   	strcat(g_mqTopicResponse,response);
+
+   	g_mqClientId[0]=0;
+ 	strcat(g_mqClientId,topicFront);
+   	strcat(g_mqClientId,gs_siteId);
 
 	printf("-------enter mqtt_pub_treat----------------- \n");
-    MQTTClient_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    MQTTClient_create(&client, ADDRESS, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
     conn_opts.keepAliveInterval = 60;
     conn_opts.cleansession = 1;
-
+    MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
 	if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
 	{
 		printf("start up Failed to connect, return code %d\n", rc);
 		//exit(EXIT_FAILURE);
 	}
 
-
+	MQTTClient_subscribe(client, g_mqTopicCtrl, QOS);
 
 	while(1)
 	{
@@ -58,11 +116,18 @@ void *mqtt_pub_treat(int argc, char* argv[])
 				{
 					printf(" pub retry to connect failure, return code %d\n", rc);
 				}
+			else
+			{
+				MQTTClient_subscribe(client, g_mqTopicCtrl, QOS);
+			}
+			g_connectErrCount++;
+			if(g_connectErrCount>200){
+				printf(" -----------reboot--------------\n");
+				system("reboot");
+			}
 			sleep(3);
-
-
 		};
-
+		g_connectErrCount=0;
 		pthread_mutex_lock(&mqSentBuff.lock);
 		pthread_cond_wait(&mqSentBuff.newPacketFlag, &mqSentBuff.lock);
 
@@ -75,18 +140,26 @@ void *mqtt_pub_treat(int argc, char* argv[])
 		
 		if(mqSentBuff.mqttTopicFlag == MQTPA)
 		{
-			MQTTClient_publish(client, TOPIC,mqSentBuff.len, pubBuf,QOS,0, &token);
+			MQTTClient_publish(client, gs_report,mqSentBuff.len, pubBuf,QOS,0, &token);
+			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+			//printf("---rc=%d------token=%d---------------\n",rc,token);
+			if(rc!=0)
+			{
+				printf("----retry---------------------\n");
+				pthread_mutex_lock(&comBuff0.lock);
+				AP_circleBuff_WritePacket(pubBuf,mqSentBuff.len,DTU2MQTPA);
+				pthread_cond_signal(&comBuff0.newPacketFlag);
+				pthread_mutex_unlock(&comBuff0.lock);
+
+			}
 		}
 		else
 		{
-			MQTTClient_publish(client, TOPIC1,mqSentBuff.len, pubBuf,QOS,0, &token);
+			MQTTClient_publish(client, g_mqTopicResponse,mqSentBuff.len, pubBuf,QOS,0, &token);
+			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
 		}
 
-//		 printf("Waiting for up to %d seconds for publication of %s\n"	 ""
-//				 "on topic %s for client with ClientID: %s\n",
-//		 (int)(TIMEOUT/1000), PAYLOAD, TOPIC, CLIENTID);
-		 rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-		 printf("Message with delivery token %d delivered\n", token);
+		//if(rc==0)printf("Message with delivery token %d delivered\n", token);
 
 		//--------------------------------------
 		//sleep(2);

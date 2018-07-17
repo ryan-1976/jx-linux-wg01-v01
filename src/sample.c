@@ -42,10 +42,10 @@ U08 spiTxBuff[BUFFER_SIZE] = {0,};
 U08 spiRxBuff[BUFFER_SIZE] = {0,};
 
 extern void spiPacket(void);
-U08  spiComPacketTreat(void);
-static U08 spi_TxRx(int fd);
+int  spiComPacketTreat(void);
+static int spi_TxRx(int fd);
 U08 spi_Init(void);
-extern void spi2MqtttPacket(void);
+extern int spi2MqtttPacket(void);
 
 static void pabort(const char *s)
 {
@@ -54,11 +54,10 @@ static void pabort(const char *s)
 }
 void *sampleData_treat(void)
 {
-	//
 	int i;
-
+    int rc;
 	U08 initFlag;
-	U08 spiComFlag;
+	int spiComFlag;
 
 	initFlag=1;
 	while(initFlag)
@@ -70,18 +69,22 @@ void *sampleData_treat(void)
 	while(1)
 	{
 		//printf("---enter ---sampleData_treat----------\n");
-		for(i=0;i<1024;i++){
-			//cdtuBuf[i]=j+1;
-		}
+//		for(i=0;i<1024;i++){
+//			cdtuBuf[i]=j+1;
+//		}
 		spiComFlag= spi_TxRx(fd_spi);
-		if(spiComFlag==0 &&spiComPacketTreat()==1)
+		if(spiComFlag!=1 && spiComPacketTreat()==1)
 		{
-			//printf("---enter ---nmamtf----------\n");
+			//printf("---new mcu packet come---------\n");
 
-			pthread_mutex_lock(&comBuff0.lock);
-			spi2MqtttPacket();
-			pthread_cond_signal(&comBuff0.newPacketFlag);
-			pthread_mutex_unlock(&comBuff0.lock);
+			//pthread_mutex_lock(&comBuff0.lock);
+			rc=spi2MqtttPacket();
+			if(rc)
+			{
+				//pthread_cond_signal(&comBuff0.newPacketFlag);
+				//printf("---new mcu packet come--ok-------\n");
+			}
+			//pthread_mutex_unlock(&comBuff0.lock);
 
 //			pthread_mutex_lock(&sqlWriteBufferLock);
 //			write_sqliteFifo(cdtuBuf,1024,0xff);
@@ -123,9 +126,9 @@ U08 sumCheck(void){
 	//ret=1;
 	return ret;
 }
-U08 spiComPacketTreat(void)
+int spiComPacketTreat(void)
 {
-	U08 ret;
+	int ret;
 
 	ret=0;
 	if(spiRxBuff[0]==0xaa&&spiRxBuff[1]<=8&&sumCheck()==1)
@@ -202,7 +205,7 @@ return flag;
 // printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
 }
 
-static U08 spi_TxRx(int fd)
+static int spi_TxRx(int fd)
 {
 	int ret;
 	int i,m;
@@ -235,6 +238,7 @@ static U08 spi_TxRx(int fd)
         if (ret == 1)
 		{
         	pabort("can't revieve spi message\\n");
+        	return ret;
 		}
 //		else
 //		{
@@ -252,7 +256,7 @@ static U08 spi_TxRx(int fd)
 //		}
 //		printf("\n");
 //		printf("%x ", spiRxBuff[BUFFER_SIZE-2]);
-//		printf("%x ", spiRxBuff[BUFFER_SIZE-1]);
-//		printf("\n");
+//		printf("%x\n ", spiRxBuff[BUFFER_SIZE-1]);
+		//printf("ret =%x\n",ret);
 		return ret;
 }

@@ -3,7 +3,7 @@
 #define BUFFER_SIZE 16 // ����������
 #include "circlebuff.h"
 
-extern unsigned char AP_PacketBuff[];
+
 extern DATAS_BUFF_T   comBuff0; 
 void msgDisPatcherTreat(void);
 
@@ -23,7 +23,7 @@ void *msgDisPatcherThread(void)
  {
 	INT16U port;
 	INT16U i;
-
+	//printf("enter msgDisPatcherTreat \n");
 	port = AP_circleBuff_ReadPacketData();
 //	switch(port)
 //	{

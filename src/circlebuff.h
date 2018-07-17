@@ -18,11 +18,11 @@
 #ifndef _AP_CIRCLEBUFF_INCLUDED_
 #define _AP_CIRCLEBUFF_INCLUDED_
 
-//#define   TZigbee_PACK_HEAD       0xA5
-#define   MAX_BUFF_LEN            102400
+//#define   MAX_BUFF_LEN          102400000
+#define   MAX_BUFF_LEN            10240000
 #define   MQ_SENT_BUFF_LEN        2024
 #define   RECV_BUFF_LEN           2024
-#define   MAX_PACKET_BUFF_LEN     2100  
+
 #define BUSY 1;
 #define IDLE 0;
 

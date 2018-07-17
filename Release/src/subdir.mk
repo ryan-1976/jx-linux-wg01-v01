@@ -9,7 +9,6 @@ C_SRCS += \
 ../src/circlebuff.c \
 ../src/monitor.c \
 ../src/mqtt-pub.c \
-../src/mqtt-sub.c \
 ../src/msgDispatcher.c \
 ../src/rfcomm_server.c \
 ../src/sample.c \
@@ -22,7 +21,6 @@ OBJS += \
 ./src/circlebuff.o \
 ./src/monitor.o \
 ./src/mqtt-pub.o \
-./src/mqtt-sub.o \
 ./src/msgDispatcher.o \
 ./src/rfcomm_server.o \
 ./src/sample.o \
@@ -35,7 +33,6 @@ C_DEPS += \
 ./src/circlebuff.d \
 ./src/monitor.d \
 ./src/mqtt-pub.d \
-./src/mqtt-sub.d \
 ./src/msgDispatcher.d \
 ./src/rfcomm_server.d \
 ./src/sample.d \
