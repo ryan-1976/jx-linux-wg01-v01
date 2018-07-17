@@ -6,7 +6,8 @@
 #include <unistd.h>
 
 //#define ADDRESS     "tcp://localhost:1883"
-#define ADDRESS     "tcp://192.168.3.101:1883"
+//#define ADDRESS     "tcp://192.168.3.101:1883"
+#define ADDRESS     "tcp://47.106.81.63:1883"
 #define CLIENTID    "11111111111111sub"
 #define CLIENTID1   "11111111111122sub"
 #define TOPIC       "mqtt/31111111111111"
@@ -18,7 +19,7 @@
 extern DATAS_BUFF_T   comBuff0; 
 
 volatile MQTTClient_deliveryToken deliveredtoken;
-
+int g_connectErrCount=0;
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
     printf("Message with token value %d delivery confirmed\n", dt);
@@ -130,8 +131,21 @@ void *mqtt_sub_treat(int argc, char* argv[])
 				    MQTTClient_subscribe(client, TOPIC, QOS);
 			}
 			sleep(3);
+			g_connectErrCount++;
+//			if((g_connectErrCount%10)==0)
+//			{
+//				printf(" ----------reset wifi--------------\n");
+//				system("wpa_supplicant -Dnl80211 -iwlan0 -c/opt/wpa_supplicant.conf -B > /dev/null 2>&1");
+//				system("udhcpc -b -i wlan0");
+//			}
+
+			if(g_connectErrCount>200){
+				printf(" -----------reboot--------------\n");
+				system("reboot");
+			}
 			printf("-------sub wait to connected-----------------\n");
 		};
+		g_connectErrCount=0;
 		sleep(3);
 
     }while(1);

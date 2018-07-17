@@ -29,7 +29,7 @@ all: jx-linux-wg01-v01
 jx-linux-wg01-v01: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross GCC Linker'
-	arm-linux-gnueabihf-gcc  -o "jx-linux-wg01-v01" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-linux-gnueabihf-gcc -L"/home/ryan/eclipse-workspace/jx-linux-wg01-v01/lib/arm-lib/mqtt" -L"/home/ryan/eclipse-workspace/jx-linux-wg01-v01/lib/arm-lib/bluetooth/lib" -L"/home/ryan/eclipse-workspace/jx-linux-wg01-v01/lib/arm-lib/sqlite3" -o "jx-linux-wg01-v01" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
