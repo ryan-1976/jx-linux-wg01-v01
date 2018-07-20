@@ -9,17 +9,18 @@
 #include "circlebuff.h"
 
 const char *gs_siteId="18071301";
-#define ADDRESS     "tcp://47.106.81.63:1883"
-//#define CLIENTID    "11111111111111pub"
+//#define ADDRESS     "tcp://47.106.81.63:1883"
+#define ADDRESS     "tcp://120.77.254.235:2183"
 
 char gs_report[50];
 char g_mqTopicCtrl[50];
 char g_mqTopicResponse[50];
 char g_mqClientId[50];
+static char temp[50];
 static const char *report="/report";
 static const char *response="/response";
 static const char *rec="/rec";
-static const char *topicFront="/jx/fjyp_";
+static const char *topicFront="SBM01/";
 #define QOS         1
 #define TIMEOUT     5000L
 
@@ -73,8 +74,6 @@ void *mqtt_pub_treat(int argc, char* argv[])
     MQTTClient_deliveryToken token;
     int rc, i;
 
-    conn_opts.username="jxkj007";
-    conn_opts.password="001";
 
    	gs_report[0]=0;
    	strcat(gs_report,topicFront);
@@ -94,6 +93,14 @@ void *mqtt_pub_treat(int argc, char* argv[])
    	g_mqClientId[0]=0;
  	strcat(g_mqClientId,topicFront);
    	strcat(g_mqClientId,gs_siteId);
+
+	conn_opts.username="jxkj007";
+	conn_opts.password="001";
+
+	temp[0] =0;
+	strcat(temp,g_mqClientId);
+	strcat(temp,"/will");
+	conn_opts.will->topicName=temp;
 
 	printf("-------enter mqtt_pub_treat----------------- \n");
     MQTTClient_create(&client, ADDRESS, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
