@@ -4,39 +4,42 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/Funtions.c \
 ../src/UartFun.c \
 ../src/cJSON.c \
 ../src/circlebuff.c \
 ../src/monitor.c \
+../src/mqRecPacketTreat.c \
 ../src/mqtt-pub.c \
 ../src/msgDispatcher.c \
 ../src/rfcomm_server.c \
 ../src/sample.c \
-../src/spiFuntions.c \
 ../src/sqlite3_task.c 
 
 OBJS += \
+./src/Funtions.o \
 ./src/UartFun.o \
 ./src/cJSON.o \
 ./src/circlebuff.o \
 ./src/monitor.o \
+./src/mqRecPacketTreat.o \
 ./src/mqtt-pub.o \
 ./src/msgDispatcher.o \
 ./src/rfcomm_server.o \
 ./src/sample.o \
-./src/spiFuntions.o \
 ./src/sqlite3_task.o 
 
 C_DEPS += \
+./src/Funtions.d \
 ./src/UartFun.d \
 ./src/cJSON.d \
 ./src/circlebuff.d \
 ./src/monitor.d \
+./src/mqRecPacketTreat.d \
 ./src/mqtt-pub.d \
 ./src/msgDispatcher.d \
 ./src/rfcomm_server.d \
 ./src/sample.d \
-./src/spiFuntions.d \
 ./src/sqlite3_task.d 
 
 

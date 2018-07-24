@@ -235,7 +235,7 @@ void *sqlite_treat(void)
 {
 	int i;
 
-	printf("---enter ---sqlite_treat----------\n");
+	//printf("---enter ---sqlite_treat----------\n");
 	InitSqliteDb();
 	static unsigned int id=0,devId=0x55,devSampleId=0,timestamp=0x88;
 

@@ -37,7 +37,7 @@ static unsigned long int speed = 500000;
 unsigned char buf_me[1] = {0x55};
 static U16 delay;
 static U08 g_mcuPaketNumWait4Get;
-
+extern char g_firstConnetFlag;
 U08 spiTxBuff[BUFFER_SIZE] = {0,};
 U08 spiRxBuff[BUFFER_SIZE] = {0,};
 
@@ -46,7 +46,7 @@ int  spiComPacketTreat(void);
 static int spi_TxRx(int fd);
 U08 spi_Init(void);
 extern int spi2MqtttPacket(void);
-
+extern getTimePacket(void);
 static void pabort(const char *s)
 {
 	perror(s);
@@ -65,7 +65,12 @@ void *sampleData_treat(void)
 		initFlag=spi_Init();
 		sleep(1);
 	}
-
+	while(g_firstConnetFlag==0)
+	{
+		sleep(1);
+	}
+	getTimePacket();
+	sleep(3);
 	while(1)
 	{
 		//printf("---enter ---sampleData_treat----------\n");
@@ -79,12 +84,6 @@ void *sampleData_treat(void)
 
 			//pthread_mutex_lock(&comBuff0.lock);
 			rc=spi2MqtttPacket();
-			if(rc)
-			{
-				//pthread_cond_signal(&comBuff0.newPacketFlag);
-				//printf("---new mcu packet come--ok-------\n");
-			}
-			//pthread_mutex_unlock(&comBuff0.lock);
 
 //			pthread_mutex_lock(&sqlWriteBufferLock);
 //			write_sqliteFifo(cdtuBuf,1024,0xff);
@@ -92,19 +91,16 @@ void *sampleData_treat(void)
 //			pthread_mutex_unlock(&sqlWriteBufferLock);
 
 			if(g_mcuPaketNumWait4Get !=0)
-				{
-				//printf("---enter ---300ms----------\n");
-				usleep(250000);//delay 250ms
-				}
+			{
+			usleep(250000);//delay 250ms
+			}
 
 			else {
-				//printf("---enter ---1s--ok--------\n");
 				sleep(1);//delay 1s
 			}
 		}
 		else
 		{
-			//printf("---enter ---1s--err--------\n");
 			sleep(1);//delay 1s
 		}
 	}

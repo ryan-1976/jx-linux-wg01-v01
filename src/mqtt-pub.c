@@ -9,18 +9,19 @@
 #include "circlebuff.h"
 
 const char *gs_siteId="18071301";
-//#define ADDRESS     "tcp://47.106.81.63:1883"
-#define ADDRESS     "tcp://120.77.254.235:2183"
+#define ADDRESS     "tcp://47.106.81.63:1883"
+//#define ADDRESS     "tcp://120.77.254.235:2183"
 
 char gs_report[50];
 char g_mqTopicCtrl[50];
 char g_mqTopicResponse[50];
 char g_mqClientId[50];
 static char temp[50];
-static const char *report="/report";
+static const char *report="/D2S";
 static const char *response="/response";
-static const char *rec="/rec";
+static const char *rec="/S2D";
 static const char *topicFront="SBM01/";
+char g_firstConnetFlag=0;
 #define QOS         1
 #define TIMEOUT     5000L
 
@@ -34,7 +35,7 @@ volatile MQTTClient_deliveryToken deliveredtoken;
 int g_connectErrCount=0;
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
-    printf("Message with token value %d delivery confirmed\n", dt);
+    //printf("Message with token value %d delivery confirmed\n", dt);
     deliveredtoken = dt;
 }
 
@@ -96,13 +97,17 @@ void *mqtt_pub_treat(int argc, char* argv[])
 
 	conn_opts.username="jxkj007";
 	conn_opts.password="001";
-
-	temp[0] =0;
-	strcat(temp,g_mqClientId);
-	strcat(temp,"/will");
-	conn_opts.will->topicName=temp;
-
-	printf("-------enter mqtt_pub_treat----------------- \n");
+    //-----------------------------------------
+	//strcat(conn_opts.will->topicName,"{\"willstreams\":");
+	//conn_opts.will->topicName=0;
+	//conn_opts.will->topicName=gs_siteId;
+	//strcat(conn_opts.will->topicName,"test");
+	//strcat(conn_opts.will->topicName,"}");
+	//sprintf(conn_opts.will->topicName,"%s%s%s", "{\"willstreams\":",g_mqClientId,"}");
+//	strcat(g_mqClientId,gs_siteId);
+//	conn_opts.will->topicName=temp;
+	//------------------------------------
+	//printf("-------enter mqtt_pub_treat AMTF----------------- \n");
     MQTTClient_create(&client, ADDRESS, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
     conn_opts.keepAliveInterval = 60;
@@ -134,6 +139,7 @@ void *mqtt_pub_treat(int argc, char* argv[])
 			}
 			sleep(3);
 		};
+		g_firstConnetFlag=1;
 		g_connectErrCount=0;
 		pthread_mutex_lock(&mqSentBuff.lock);
 		pthread_cond_wait(&mqSentBuff.newPacketFlag, &mqSentBuff.lock);
@@ -165,9 +171,7 @@ void *mqtt_pub_treat(int argc, char* argv[])
 			MQTTClient_publish(client, g_mqTopicResponse,mqSentBuff.len, pubBuf,QOS,0, &token);
 			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
 		}
-
 		//if(rc==0)printf("Message with delivery token %d delivered\n", token);
-
 		//--------------------------------------
 		//sleep(2);
 		

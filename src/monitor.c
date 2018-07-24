@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include "circlebuff.h"
 #include <stdlib.h>
-//extern void * mqtt_sub_treat(int argc, char* argv[]);
+extern void * mqRecPackeThread(void);
 extern void * mqtt_pub_treat(int argc, char* argv[]);
 extern void * msgDisPatcherThread(void);
 extern void * sampleData_treat(void);
@@ -25,7 +25,7 @@ extern char *gs_siteId;
 	//tabProc();
 	pthread_create(&th_d, NULL, (void *(*)(void *))sqlite_treat, 0);
 	pthread_create(&th_a, NULL, (void *(*)(void *))msgDisPatcherThread, 0);
-	//pthread_create(&th_b, NULL, (void *(*)(void *))mqtt_sub_treat, 0);
+	pthread_create(&th_b, NULL, (void *(*)(void *))mqRecPackeThread, 0);
 	pthread_create(&th_c, NULL, (void *(*)(void *))mqtt_pub_treat, 0);
 	pthread_create(&th_e, NULL, (void *(*)(void *))sampleData_treat, 0);
 	//pthread_create(&th_f, NULL, (void *(*)(void *))uartTRecThread, 0);

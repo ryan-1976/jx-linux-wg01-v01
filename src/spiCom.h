@@ -10,23 +10,37 @@ typedef  unsigned int   U32;
 typedef  signed char    I08;
 typedef  signed short   I16;
 
+#define PACKED __attribute__((aligned(1),packed))  // 一字节对齐
+//typedef struct{
+//	U08        startFlag;
+//	U08        packetLen[2];
+//	U08        packetNum[2];
+//	long       timeS;
+//	U16        timeM;
+//	U08        siteId[4];
+//	U08        devId;
+//	U08        packetCmd;
+//	U08        packetAnswer;
+//} PACKED COM_HEAD_TYPE;
 typedef struct{
 	U08        startFlag;
-	U08        packetLen[2];
-	U08        packetNum[2];
-	U08        siteId[4];
+	U16        packetLen;
+	U16        packetNum;
+	long       timeS;
+	U16        timeM;
+	long       siteId;
 	U08        devId;
 	U08        packetCmd;
 	U08        packetAnswer;
-}COM_HEAD_TYPE;
+} PACKED COM_HEAD_TYPE;
 
 #define PACKET_HEAD_LEN (sizeof(COM_HEAD_TYPE))
 #define PACKET_CONTEXT_LEN 734
-#define PACKET_LEN (PACKET_HEAD_LEN+PACKET_CONTEXT_LEN+3)
+#define PACKET_MAX_LEN 1024
 
 typedef union
 {
-	U08             buffer[PACKET_LEN];
+	U08             buffer[PACKET_MAX_LEN];
     COM_HEAD_TYPE   head;
 } COM_TYPE;
 
