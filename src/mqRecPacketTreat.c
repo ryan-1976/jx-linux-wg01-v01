@@ -18,6 +18,7 @@ TF_MON_OBJ  monObj_tbl[] = {
 	{0x04,    0x0001,  0x00 ,0},
 	{0xff,    0xffff,  0xff ,0Xff},
 };
+void specialTreak(int oid);
 int search_table_index(int oid)
 {
 	int i,index;
@@ -61,7 +62,7 @@ void *mqRecPackeThread(void)
 		printf("\n");
 		pCom=(COM_TYPE*)&RecvBuff4treat.data[0];
 		packetRxLen = pCom->head.packetLen;
-		printf("---packetRxLen=%d-------------------\n",packetRxLen);
+//		printf("---packetRxLen=%d-------------------\n",packetRxLen);
 		ptrRx = &RecvBuff4treat.data[PACKET_HEAD_LEN];
 	//	ptrTx = (U08)&RecvBuff4treat[PACKET_HEAD_LEN];
 		for (i = 0; i < (packetRxLen+3-PACKET_HEAD_LEN); i += tmpLen)
@@ -70,8 +71,8 @@ void *mqRecPackeThread(void)
 			    tmp.byte[0] =*ptrRx++;
 				tmp.byte[1] =*ptrRx++;
 				j=search_table_index((int)tmp.word);
-				printf("---oid=%d-------------------\n",tmp.word);
-				printf("---j=%d-------------------\n",j);
+//				printf("---oid=%d-------------------\n",tmp.word);
+//				printf("---j=%d-------------------\n",j);
 				if(j !=0xffff)
 				{
 					if(tmpLen<=7)
@@ -82,16 +83,34 @@ void *mqRecPackeThread(void)
 						if(tmpLen>=6)ltmp.byte[1]=*ptrRx++;
 						if(tmpLen>=7)ltmp.byte[0]=*ptrRx++;
 						monObj_tbl[j].value =ltmp.lword;
-//
-//						printf("---ltmp.byte[1]=%x-------------------\n",ltmp.byte[1]);
-//						printf("---ltmp.byte[2]=%x-------------------\n",ltmp.byte[2]);
-//						printf("---ltmp.byte[3]=%x-------------------\n",ltmp.byte[3]);
-						printf("---monObj_tbl[j].value=%x-------------------\n",monObj_tbl[j].value);
-					}
 
+					//	printf("---monObj_tbl[j].value=%x-------------------\n",monObj_tbl[j].value);
+					}
+					specialTreak(j);
 				}
 		}
 		pthread_mutex_unlock(&RecvBuff4treat.lock);
+	}
+
+}
+void specialTreak(int index)
+{
+	 struct timeval tv;
+	if(monObj_tbl[index].oid==0x0001)
+	{
+		tv.tv_sec = monObj_tbl[index].value;
+		tv.tv_usec = 0;
+		if(settimeofday (&tv, (struct timezone *) 0) < 0)
+		{
+			printf("\n");
+			printf("Set system datatime error!\n");
+
+		}
+		else
+		{
+			printf("\n");
+			printf("Set system datatime ok!\n");
+		}
 	}
 
 }
