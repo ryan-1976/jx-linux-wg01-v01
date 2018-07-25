@@ -56,7 +56,7 @@ void *mqRecPackeThread(void)
 		printf("---receiv packet :--------------------\n");
 		for(i =0;i<RecvBuff4treat.len;i++)
 		{
-			printf("%x",RecvBuff4treat.data[i]);
+			printf("%x ",RecvBuff4treat.data[i]);
 			//pubBuf[i]= RecvBuff4treat.data[i];
 		}
 		printf("\n");
@@ -78,10 +78,10 @@ void *mqRecPackeThread(void)
 					if(tmpLen<=7)
 					{
 						ltmp.lword=0;
-						if(tmpLen>=4)ltmp.byte[3]=*ptrRx++;
-						if(tmpLen>=5)ltmp.byte[2]=*ptrRx++;
-						if(tmpLen>=6)ltmp.byte[1]=*ptrRx++;
-						if(tmpLen>=7)ltmp.byte[0]=*ptrRx++;
+						if(tmpLen>=4)ltmp.byte[0]=*ptrRx++;
+						if(tmpLen>=5)ltmp.byte[1]=*ptrRx++;
+						if(tmpLen>=6)ltmp.byte[2]=*ptrRx++;
+						if(tmpLen>=7)ltmp.byte[3]=*ptrRx++;
 						monObj_tbl[j].value =ltmp.lword;
 
 					//	printf("---monObj_tbl[j].value=%x-------------------\n",monObj_tbl[j].value);
@@ -95,22 +95,30 @@ void *mqRecPackeThread(void)
 }
 void specialTreak(int index)
 {
-	 struct timeval tv;
+	 struct timeval stime;
 	if(monObj_tbl[index].oid==0x0001)
 	{
-		tv.tv_sec = monObj_tbl[index].value;
-		tv.tv_usec = 0;
-		if(settimeofday (&tv, (struct timezone *) 0) < 0)
+//		gettimeofday(&stime,NULL);
+//		printf("before 的时间秒数是：%ld,毫秒数是：%ld\n",stime.tv_sec,stime.tv_usec);
+		stime.tv_sec = monObj_tbl[index].value;
+		//printf("stime.tv_sec=%x\n",stime.tv_sec);
+		//stime.tv_sec = 0x5b582839;
+		stime.tv_usec = 0;
+		if(settimeofday (&stime, (struct timezone *) 0) < 0)
 		{
-			printf("\n");
-			printf("Set system datatime error!\n");
-
+			printf("\nSet system datatime error!\n");
 		}
 		else
 		{
-			printf("\n");
-			printf("Set system datatime ok!\n");
+			printf("\nSet system datatime ok!\n");
 		}
+//		else
+//		{
+//			printf("\n");
+//			printf("Set system datatime ok!\n");
+//			gettimeofday(&stime,NULL);
+//		    printf("set after时间秒数是：%ld,毫秒数是：%ld\n",stime.tv_sec,stime.tv_usec);
+//		}
 	}
 
 }

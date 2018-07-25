@@ -9,8 +9,8 @@
 #include "circlebuff.h"
 
 const char *gs_siteId="18071301";
-#define ADDRESS     "tcp://47.106.81.63:1883"
-//#define ADDRESS     "tcp://120.77.254.235:2183"
+//#define ADDRESS     "tcp://47.106.81.63:1883"
+#define ADDRESS     "tcp://120.77.254.235:2183"
 
 char gs_report[50];
 char g_mqTopicCtrl[50];
@@ -44,9 +44,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     int i;
     char* payloadptr;
 
-    printf(" new mqtt Message arrived:");
-    printf(" topic: %s", topicName);
-	printf(" topicLen:%d\n ",message->payloadlen);
+//    printf(" new mqtt Message arrived:");
+//    printf(" topic: %s", topicName);
+//	printf(" topicLen:%d\n ",message->payloadlen);
 
     payloadptr = message->payload;
 
@@ -155,10 +155,9 @@ void *mqtt_pub_treat(int argc, char* argv[])
 		{
 			MQTTClient_publish(client, gs_report,mqSentBuff.len, pubBuf,QOS,0, &token);
 			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-			//printf("---rc=%d------token=%d---------------\n",rc,token);
-			if(rc!=0)
+			if(rc!=0&&token>2)
 			{
-				printf("----retry---------------------\n");
+				printf("----retry-----rc=%d--------token=%d--------\n",rc,token);
 				pthread_mutex_lock(&comBuff0.lock);
 				AP_circleBuff_WritePacket(pubBuf,mqSentBuff.len,DTU2MQTPA);
 				pthread_cond_signal(&comBuff0.newPacketFlag);
