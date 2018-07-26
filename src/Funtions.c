@@ -8,7 +8,7 @@
 INT8U cdtuBuf[1024];
 extern U08 spiRxBuff[];
 U16 g_comPacketIdx=0;
-static U32 g_siteId=0x18071301;
+//static U32 g_siteId=0x18071301;
 extern U32 g_siteId;
 extern DATAS_BUFF_T   comBuff0;
 int spi2MqtttPacket(void)
@@ -89,7 +89,7 @@ void getTimePacket(void)
 	pCom->buffer[packetLen++]=(U08)(crc>>8);
 	pCom->buffer[packetLen++]=(U08)(crc);
     pCom->buffer[packetLen++]=0x7e;
-//    printf("\n ");
+//    printf("send packet ---\n ");
 //    for(i=0;i<pCom->head.packetLen+6;i++)
 //    {
 //    	printf("%x ",cdtuBuf[i]);

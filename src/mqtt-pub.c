@@ -8,9 +8,10 @@
 #include <unistd.h>
 #include "circlebuff.h"
 
-const char *gs_siteId="18071301";
-//#define ADDRESS     "tcp://47.106.81.63:1883"
-#define ADDRESS     "tcp://120.77.254.235:2183"
+const char *gs_siteId="18072601";
+//int g_siteId=0x18072602;
+#define ADDRESS     "tcp://47.106.81.63:1883"
+//#define ADDRESS     "tcp://120.77.254.235:2183"
 
 char gs_report[50];
 char g_mqTopicCtrl[50];
@@ -155,7 +156,8 @@ void *mqtt_pub_treat(int argc, char* argv[])
 		{
 			MQTTClient_publish(client, gs_report,mqSentBuff.len, pubBuf,QOS,0, &token);
 			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-			if(rc!=0&&token>2)
+			//if(rc!=0&&token>2)
+			if(rc!=0)
 			{
 				printf("----retry-----rc=%d--------token=%d--------\n",rc,token);
 				pthread_mutex_lock(&comBuff0.lock);
