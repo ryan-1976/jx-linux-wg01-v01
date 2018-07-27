@@ -12,16 +12,25 @@ extern void * sqlite_treat(void);
 extern void G_Buff_init(void);
 //extern void * uartTRecThread(void);
 int g_siteId;
-extern char *gs_siteId;
+char rd_siteId[20];
+char rd_serverIP[30];
+const char *gs_siteId="18072799";
  int main(void)
  {
 	pthread_t th_a, th_b,th_c,th_d,th_e,th_f;
 
 	void *retval;
-	printf("-----monitor start run---------\n");
-
-	g_siteId=atoi(gs_siteId);
-
+	printf("|-----monitor start run---nmamtf------|\n");
+	readConfig();
+	if(!strlen(rd_siteId))
+	{
+		g_siteId=atoi(gs_siteId);
+	}
+	else
+	{
+		g_siteId=atoi(rd_siteId);
+		printf("read devid=%s\n",rd_siteId);
+	}
 	G_Buff_init();
 	//tabProc();
 	pthread_create(&th_d, NULL, (void *(*)(void *))sqlite_treat, 0);
@@ -38,4 +47,29 @@ extern char *gs_siteId;
 	pthread_join(th_e, &retval);
 	//pthread_join(th_f, &retval);
 	return 0;
+ }
+
+ void  readConfig(void)
+ {
+	 int rt;
+	 FILE *fid;
+	 char str[3][20];
+	 rd_siteId[0]=0;
+	 rd_serverIP[0]=0;
+
+     fid=fopen("/opt/config.txt","r");
+     if(fid==NULL)
+     {
+    	 printf("not config.txt file \n ");
+         return ;
+     }
+	 fscanf(fid,"%s",&str[0][0]);
+	 fscanf(fid,"%s",&str[1][0]);
+
+	 strcat(rd_siteId,str[0]);
+	 strcat(rd_serverIP,str[1]);
+	//printf("%s\n ",str[0]);
+	//printf("%s\n ",rd_serverIP);
+
+     return ;
  }

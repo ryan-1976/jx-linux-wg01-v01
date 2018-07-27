@@ -8,8 +8,10 @@
 #include <unistd.h>
 #include "circlebuff.h"
 
-const char *gs_siteId="18072601";
-//int g_siteId=0x18072602;
+
+extern char rd_siteId[];
+extern char rd_serverIP[];
+
 #define ADDRESS     "tcp://47.106.81.63:1883"
 //#define ADDRESS     "tcp://120.77.254.235:2183"
 
@@ -73,27 +75,35 @@ void *mqtt_pub_treat(int argc, char* argv[])
     MQTTClient_deliveryToken token;
     int rc, i;
 
-	printf("-----server=%s---------\n",ADDRESS);
-	printf("-----devid=%s---------\n",gs_siteId);
+
     gs_d2s[0]=0;
    	strcat(gs_d2s,topicFront);
-   	strcat(gs_d2s,gs_siteId);
+   	strcat(gs_d2s,rd_siteId);
 	strcat(gs_d2s,d2s);
 
 	gs_s2d[0]=0;
    	strcat(gs_s2d,topicFront);
-   	strcat(gs_s2d,gs_siteId);
+   	strcat(gs_s2d,rd_siteId);
    	strcat(gs_s2d,rec);
 
    	g_mqClientId[0]=0;
  	strcat(g_mqClientId,topicFront);
-   	strcat(g_mqClientId,gs_siteId);
+   	strcat(g_mqClientId,rd_siteId);
 
 	conn_opts.username="jxkj007";
 	conn_opts.password="001";
 
+	if(strlen(rd_serverIP))
+	{
+		MQTTClient_create(&client, rd_serverIP, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+		printf("read_serverIP=%s\n",rd_serverIP);
+	}
+	else
+	{
+		MQTTClient_create(&client, ADDRESS, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
-    MQTTClient_create(&client, ADDRESS, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+		printf("ADDRESS server=%s\n",ADDRESS);
+	}
 
     conn_opts.keepAliveInterval = 60;
     conn_opts.cleansession = 1;
@@ -129,7 +139,7 @@ void *mqtt_pub_treat(int argc, char* argv[])
 //		pthread_cond_wait(&mqSentBuff.newPacketFlag, &mqSentBuff.lock);
 		while(mqSentBuff.packetSum ==0)
 		{
-			usleep(50010);
+			usleep(50000);
 		}
 		for(i =0;i<mqSentBuff.len;i++)
 		{
@@ -140,6 +150,7 @@ void *mqtt_pub_treat(int argc, char* argv[])
 		if(mqSentBuff.mqttTopicFlag == MQTPA)
 		{
 			MQTTClient_publish(client, gs_d2s,mqSentBuff.len, pubBuf,QOS,0, &token);
+			//printf("gs_d2s=%s--\n",gs_d2s);
 			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
 			if(rc!=0 && (token!=(g_preToken+1)))
 			{

@@ -67,7 +67,6 @@ void *sampleData_treat(void)
 		initFlag=spi_Init();
 		sleep(1);
 	}
-
 	while(g_firstConnetFlag==0)
 	{
 		sleep(1);
