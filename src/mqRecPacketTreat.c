@@ -50,21 +50,22 @@ void *mqRecPackeThread(void)
 	while(1)
 	{
 		pthread_mutex_lock(&RecvBuff4treat.lock);
-
-		pthread_cond_wait(&RecvBuff4treat.newPacketFlag, &RecvBuff4treat.lock);
-		printf("\n");
-		printf("---receiv packet :--------------------\n");
-		for(i =0;i<RecvBuff4treat.len;i++)
+		while(RecvBuff4treat.packetSum ==0)
 		{
-			printf("%x ",RecvBuff4treat.data[i]);
-			//pubBuf[i]= RecvBuff4treat.data[i];
+			usleep(10000);
 		}
-		printf("\n");
+		//pthread_cond_wait(&RecvBuff4treat.newPacketFlag, &RecvBuff4treat.lock);
+		//printf("\n");
+		//printf("---receiv packet :--------------------\n");
+//		for(i =0;i<RecvBuff4treat.len;i++)
+//		{
+//			printf("%x ",RecvBuff4treat.data[i]);
+//		}
+//		printf("\n");
 		pCom=(COM_TYPE*)&RecvBuff4treat.data[0];
 		packetRxLen = pCom->head.packetLen;
-//		printf("---packetRxLen=%d-------------------\n",packetRxLen);
 		ptrRx = &RecvBuff4treat.data[PACKET_HEAD_LEN];
-	//	ptrTx = (U08)&RecvBuff4treat[PACKET_HEAD_LEN];
+
 		for (i = 0; i < (packetRxLen+3-PACKET_HEAD_LEN); i += tmpLen)
 		{
 				tmpLen =*ptrRx++;
@@ -83,12 +84,12 @@ void *mqRecPackeThread(void)
 						if(tmpLen>=6)ltmp.byte[2]=*ptrRx++;
 						if(tmpLen>=7)ltmp.byte[3]=*ptrRx++;
 						monObj_tbl[j].value =ltmp.lword;
-
 					//	printf("---monObj_tbl[j].value=%x-------------------\n",monObj_tbl[j].value);
 					}
 					specialTreak(j);
 				}
 		}
+		if(RecvBuff4treat.packetSum >0)RecvBuff4treat.packetSum--;
 		pthread_mutex_unlock(&RecvBuff4treat.lock);
 	}
 

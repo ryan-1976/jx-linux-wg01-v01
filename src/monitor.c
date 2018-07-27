@@ -18,6 +18,7 @@ extern char *gs_siteId;
 	pthread_t th_a, th_b,th_c,th_d,th_e,th_f;
 
 	void *retval;
+	printf("-----monitor start run---------\n");
 
 	g_siteId=atoi(gs_siteId);
 

@@ -30,6 +30,9 @@ void G_Buff_init(void)
 {
     comBuff0.readPos = 0;
     comBuff0.writePos = 0;
+    comBuff0.packetSum =0;
+    mqSentBuff.packetSum =0;
+    RecvBuff4treat.packetSum =0;
 	pthread_mutex_init(&comBuff0.lock, NULL);
 	pthread_cond_init(&comBuff0.newPacketFlag, NULL);
 	pthread_mutex_init(&mqSentBuff.lock, NULL);
@@ -94,6 +97,8 @@ INT16U AP_circleBuff_ReadPacketData(void)
     INT16U i;
 	// printf("\n");
 	// printf("-----enter--AP_circleBuff_ReadPacketData-------------- \n");
+    if(mqSentBuff.packetSum != 0 ||RecvBuff4treat.packetSum != 0) return 0;
+    if(comBuff0.packetSum>0)comBuff0.packetSum --;
 	dataLen =0;
     if(AP_circleBuff_HaveData_Buff())
     {
@@ -117,7 +122,7 @@ INT16U AP_circleBuff_ReadPacketData(void)
 	{
 		case MQTPA2DTU:
 			            //printf("-enter-MQTPA2DTU-----------------");
-						pthread_mutex_lock(&RecvBuff4treat.lock);
+						//pthread_mutex_lock(&RecvBuff4treat.lock);
 						for(i=0;i<dataLen;i++)
 						{
 							RecvBuff4treat.data[i]=AP_circleBuff_ReadData();
@@ -125,26 +130,22 @@ INT16U AP_circleBuff_ReadPacketData(void)
 						RecvBuff4treat.protoltype = 0;
 						RecvBuff4treat.scrFlag = MQTPA;
 						RecvBuff4treat.len = dataLen;
+						RecvBuff4treat.packetSum ++;
 						//printf("--MQTPA2DTU--copy ok---------\n");
-						pthread_cond_signal(&RecvBuff4treat.newPacketFlag);
-						pthread_mutex_unlock(&RecvBuff4treat.lock);
+						//pthread_cond_signal(&RecvBuff4treat.newPacketFlag);
+						//pthread_mutex_unlock(&RecvBuff4treat.lock);
 						break;
 		case DTU2MQTPA:
-						//printf("----enter---DTU2MQTPA------------");
-						pthread_mutex_lock(&mqSentBuff.lock);
-
 						for(i=0;i<dataLen;i++)
 						{
 							mqSentBuff.data[i]=AP_circleBuff_ReadData();
 						}
 						mqSentBuff.mqttTopicFlag = MQTPA;
 						mqSentBuff.len = dataLen;
+						mqSentBuff.packetSum ++;
 						//printf("-----DTU2MUTPA copy ok--------------\n");
-						pthread_cond_signal(&mqSentBuff.newPacketFlag);
-						pthread_mutex_unlock(&mqSentBuff.lock);
 						break;
         default:
-
 						printf("err port=%x \n", port);
 						break;
 
@@ -162,7 +163,15 @@ INT16U AP_circleBuff_ReadPacketData(void)
 void AP_circleBuff_WritePacket(INT8U *s, INT16U len, INT16U port)
 {
     unsigned int i;
-	
+
+    if(comBuff0.packetSum>MAX_PACKESUM_LEN)
+    {
+    	comBuff0.writePos = 0;
+    	comBuff0.readPos = 0;
+    	comBuff0.packetSum =0;
+    	printf("reset buff circle\n");
+    }
+    comBuff0.packetSum ++;
 	//printf("\n");
 	// printf("-----enter--AP_circleBuff_WritePacket-------------- \n");
 	AP_circleBuff_WriteData((unsigned char) (port>>8));

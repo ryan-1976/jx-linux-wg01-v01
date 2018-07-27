@@ -13,9 +13,13 @@ void *msgDisPatcherThread(void)
 	 while (1)
 	 {
 		 pthread_mutex_lock(&comBuff0.lock);
-		 pthread_cond_wait(&comBuff0.newPacketFlag, &comBuff0.lock);
-		 msgDisPatcherTreat();
+		// pthread_cond_wait(&comBuff0.newPacketFlag, &comBuff0.lock);
+		 if(comBuff0.packetSum !=0)
+		 {
+			 msgDisPatcherTreat();
+		 }
 		 pthread_mutex_unlock(&comBuff0.lock);
+		 usleep(1000);
 	 }
 	 return NULL;
  }

@@ -13,19 +13,17 @@ const char *gs_siteId="18072601";
 #define ADDRESS     "tcp://47.106.81.63:1883"
 //#define ADDRESS     "tcp://120.77.254.235:2183"
 
-char gs_report[50];
-char g_mqTopicCtrl[50];
-char g_mqTopicResponse[50];
+char gs_d2s[50];
+char gs_s2d[50];
+
 char g_mqClientId[50];
-static char temp[50];
-static const char *report="/D2S";
-static const char *response="/response";
+static const char *d2s="/D2S";
 static const char *rec="/S2D";
 static const char *topicFront="SBM01/";
 char g_firstConnetFlag=0;
 #define QOS         1
 #define TIMEOUT     5000L
-
+int g_preToken=0;
 
 char pubBuf[2048];
 extern MQTT_SENT_BUFF_T   mqSentBuff;
@@ -47,14 +45,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 
 //    printf(" new mqtt Message arrived:");
 //    printf(" topic: %s", topicName);
-//	printf(" topicLen:%d\n ",message->payloadlen);
+//	  printf(" topicLen:%d\n ",message->payloadlen);
 
     payloadptr = message->payload;
 
 	pthread_mutex_lock(&comBuff0.lock);
 
 	AP_circleBuff_WritePacket(payloadptr++,message->payloadlen,MQTPA2DTU);
-	pthread_cond_signal(&comBuff0.newPacketFlag);
+	//pthread_cond_signal(&comBuff0.newPacketFlag);
 	pthread_mutex_unlock(&comBuff0.lock);
 
     MQTTClient_freeMessage(&message);
@@ -64,9 +62,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 
 void connlost(void *context, char *cause)
 {
-    printf("\nConnection lost\n");
-    printf("     cause: %s\n", cause);
-}
+    printf("\nConnection lost cause: %s\n", cause);
+ }
 
 //----------------------------------------------------------------------
 void *mqtt_pub_treat(int argc, char* argv[])
@@ -76,21 +73,17 @@ void *mqtt_pub_treat(int argc, char* argv[])
     MQTTClient_deliveryToken token;
     int rc, i;
 
+	printf("-----server=%s---------\n",ADDRESS);
+	printf("-----devid=%s---------\n",gs_siteId);
+    gs_d2s[0]=0;
+   	strcat(gs_d2s,topicFront);
+   	strcat(gs_d2s,gs_siteId);
+	strcat(gs_d2s,d2s);
 
-   	gs_report[0]=0;
-   	strcat(gs_report,topicFront);
-   	strcat(gs_report,gs_siteId);
-	strcat(gs_report,report);
-
-   	g_mqTopicCtrl[0]=0;
-   	strcat(g_mqTopicCtrl,topicFront);
-   	strcat(g_mqTopicCtrl,gs_siteId);
-   	strcat(g_mqTopicCtrl,rec);
-
-   	g_mqTopicResponse[0]=0;
-   	strcat(g_mqTopicResponse,topicFront);
-   	strcat(g_mqTopicResponse,gs_siteId);
-   	strcat(g_mqTopicResponse,response);
+	gs_s2d[0]=0;
+   	strcat(gs_s2d,topicFront);
+   	strcat(gs_s2d,gs_siteId);
+   	strcat(gs_s2d,rec);
 
    	g_mqClientId[0]=0;
  	strcat(g_mqClientId,topicFront);
@@ -98,17 +91,8 @@ void *mqtt_pub_treat(int argc, char* argv[])
 
 	conn_opts.username="jxkj007";
 	conn_opts.password="001";
-    //-----------------------------------------
-	//strcat(conn_opts.will->topicName,"{\"willstreams\":");
-	//conn_opts.will->topicName=0;
-	//conn_opts.will->topicName=gs_siteId;
-	//strcat(conn_opts.will->topicName,"test");
-	//strcat(conn_opts.will->topicName,"}");
-	//sprintf(conn_opts.will->topicName,"%s%s%s", "{\"willstreams\":",g_mqClientId,"}");
-//	strcat(g_mqClientId,gs_siteId);
-//	conn_opts.will->topicName=temp;
-	//------------------------------------
-	//printf("-------enter mqtt_pub_treat AMTF----------------- \n");
+
+
     MQTTClient_create(&client, ADDRESS, g_mqClientId, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
     conn_opts.keepAliveInterval = 60;
@@ -117,10 +101,9 @@ void *mqtt_pub_treat(int argc, char* argv[])
 	if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
 	{
 		printf("start up Failed to connect, return code %d\n", rc);
-		//exit(EXIT_FAILURE);
 	}
 
-	MQTTClient_subscribe(client, g_mqTopicCtrl, QOS);
+	MQTTClient_subscribe(client, gs_s2d, QOS);
 
 	while(1)
 	{
@@ -131,51 +114,49 @@ void *mqtt_pub_treat(int argc, char* argv[])
 				}
 			else
 			{
-				MQTTClient_subscribe(client, g_mqTopicCtrl, QOS);
+				MQTTClient_subscribe(client, gs_s2d, QOS);
 			}
 			g_connectErrCount++;
 			if(g_connectErrCount>200){
-				printf(" -----------reboot--------------\n");
+				printf(" -----system reboot--------------\n");
 				system("reboot");
 			}
 			sleep(3);
 		};
 		g_firstConnetFlag=1;
 		g_connectErrCount=0;
-		pthread_mutex_lock(&mqSentBuff.lock);
-		pthread_cond_wait(&mqSentBuff.newPacketFlag, &mqSentBuff.lock);
-
+//		pthread_mutex_lock(&mqSentBuff.lock);
+//		pthread_cond_wait(&mqSentBuff.newPacketFlag, &mqSentBuff.lock);
+		while(mqSentBuff.packetSum ==0)
+		{
+			usleep(50010);
+		}
 		for(i =0;i<mqSentBuff.len;i++)
 		{
 			pubBuf[i]= mqSentBuff.data[i];
 		}
-
-		pthread_mutex_unlock(&mqSentBuff.lock);
-		
+//		pthread_mutex_unlock(&mqSentBuff.lock);
+		if(mqSentBuff.packetSum>0)mqSentBuff.packetSum--;
 		if(mqSentBuff.mqttTopicFlag == MQTPA)
 		{
-			MQTTClient_publish(client, gs_report,mqSentBuff.len, pubBuf,QOS,0, &token);
+			MQTTClient_publish(client, gs_d2s,mqSentBuff.len, pubBuf,QOS,0, &token);
 			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-			//if(rc!=0&&token>2)
-			if(rc!=0)
+			if(rc!=0 && (token!=(g_preToken+1)))
 			{
-				printf("----retry-----rc=%d--------token=%d--------\n",rc,token);
+				printf("retry-rc=%d--token=%d--packetSum=%d--\n",rc,token,comBuff0.packetSum);
 				pthread_mutex_lock(&comBuff0.lock);
 				AP_circleBuff_WritePacket(pubBuf,mqSentBuff.len,DTU2MQTPA);
-				pthread_cond_signal(&comBuff0.newPacketFlag);
+				//pthread_cond_signal(&comBuff0.newPacketFlag);
 				pthread_mutex_unlock(&comBuff0.lock);
-
+			}
+			else
+			{
+				g_preToken =token;
+				//printf("token=%d\n",token);
 			}
 		}
-		else
-		{
-			MQTTClient_publish(client, g_mqTopicResponse,mqSentBuff.len, pubBuf,QOS,0, &token);
-			rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-		}
-		//if(rc==0)printf("Message with delivery token %d delivered\n", token);
 		//--------------------------------------
-		//sleep(2);
-		
+		//sleep(1);
 	}
 
     MQTTClient_disconnect(client, 10000);

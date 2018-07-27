@@ -19,9 +19,11 @@
 #define _AP_CIRCLEBUFF_INCLUDED_
 
 //#define   MAX_BUFF_LEN          102400000
-#define   MAX_BUFF_LEN            10240000
-#define   MQ_SENT_BUFF_LEN        2024
-#define   RECV_BUFF_LEN           2024
+#define   MAX_BUFF_LEN            40960000
+#define   MAX_PACKESUM_LEN        40000
+
+#define   MQ_SENT_BUFF_LEN        20480
+#define   RECV_BUFF_LEN           20480
 
 #define BUSY 1;
 #define IDLE 0;
@@ -51,16 +53,19 @@ typedef struct
 {
 	volatile unsigned long int    readPos;
 	volatile unsigned long int    writePos;
+	int packetSum;
     unsigned char   data[MAX_BUFF_LEN];
 	pthread_mutex_t lock;
 	pthread_cond_t  newPacketFlag;
 	
+
 }DATAS_BUFF_T;
 typedef struct
 {
     unsigned char   data[MQ_SENT_BUFF_LEN];
     unsigned char   mqttTopicFlag;
     unsigned int    len;
+    volatile int    packetSum;
 	pthread_mutex_t lock;
 	pthread_cond_t  newPacketFlag;
 }MQTT_SENT_BUFF_T;
@@ -70,6 +75,7 @@ typedef struct
     unsigned char   protoltype;
     unsigned char   scrFlag;//data from where
     unsigned int    len;
+    volatile int    packetSum;
 	pthread_mutex_t lock;
 	pthread_cond_t  newPacketFlag;
 }RECV_BUFF_T;
